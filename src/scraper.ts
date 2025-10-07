@@ -12,7 +12,7 @@ interface DependentRepo {
 async function scrapeGitHubDependents(
   owner: string,
   repo: string,
-  maxPages: number = 10
+  maxPages: number = Infinity
 ): Promise<DependentRepo[]> {
   const baseUrl = `https://github.com/${owner}/${repo}/network/dependents`
   const repositories: DependentRepo[] = []
@@ -155,7 +155,7 @@ function parseStarCount(starsText: string): number {
 async function main() {
   const owner = 'wevm'
   const repo = 'viem'
-  const maxPages = 50 // Adjust as needed - be careful with rate limits
+  const maxPages = undefined
 
   console.log(`
 ╔═══════════════════════════════════════════════════════╗
