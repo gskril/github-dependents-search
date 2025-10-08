@@ -3,16 +3,14 @@ import * as cheerio from 'cheerio'
 interface DependentRepo {
   name: string
   full_name: string
-  description: string | null
   stars: number
   url: string
-  language: string | null
 }
 
 async function scrapeGitHubDependents(
   owner: string,
   repo: string,
-  maxPages: number = Infinity
+  maxPages: number = 5
 ): Promise<DependentRepo[]> {
   const baseUrl = `https://github.com/${owner}/${repo}/network/dependents`
   const repositories: DependentRepo[] = []
@@ -72,26 +70,17 @@ async function scrapeGitHubDependents(
           const fullName = repoLink.attr('href')?.replace('/', '').trim() || ''
           const url = fullName ? `https://github.com/${fullName}` : ''
 
-          // Extract description
-          const description = $box.find('span.px-1').text().trim() || null
-
           // Extract stars
           const starsText = $box.find('svg.octicon-star').parent().text().trim()
           const stars = parseStarCount(starsText)
-
-          // Extract language
-          const languageSpan = $box.find('span[itemprop="programmingLanguage"]')
-          const language = languageSpan.text().trim() || null
 
           if (fullName) {
             const [owner, name] = fullName.split('/')
             repositories.push({
               name: name || fullName,
               full_name: fullName,
-              description,
               stars,
               url,
-              language,
             })
           }
         } catch (err) {
@@ -180,7 +169,7 @@ async function main() {
     console.log(
       `${index + 1}. ${repo.full_name.padEnd(40)} ${repo.stars
         .toLocaleString()
-        .padStart(7)} ⭐ ${repo.language || 'N/A'}`
+        .padStart(7)} ⭐`
     )
   })
 
@@ -196,21 +185,6 @@ async function main() {
       repositories.reduce((sum, r) => sum + r.stars, 0) / repositories.length
     ).toLocaleString()}`
   )
-
-  const languages = repositories
-    .filter((r) => r.language)
-    .reduce((acc, r) => {
-      acc[r.language!] = (acc[r.language!] || 0) + 1
-      return acc
-    }, {} as Record<string, number>)
-
-  console.log(`\n🔤 Top languages:`)
-  Object.entries(languages)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5)
-    .forEach(([lang, count]) => {
-      console.log(`   ${lang}: ${count}`)
-    })
 }
 
 main()
